@@ -1,0 +1,13 @@
+[
+{
+    "id": "edit",
+    "children":
+    [
+        {
+		    "id" : "htmlcodeconverter",
+		    "caption" : "HTML尖括号转换",
+		    "command" : "example"
+		}
+    ]
+}
+]
