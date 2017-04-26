@@ -1,0 +1,4 @@
+[
+  { "caption": "Markdown Numbered Headers:Insert/Update Headers Nums", "command": "markdown_add_numbered_nums" },
+  { "caption": "Markdown Numbered Headers:Remove Headers Nums", "command": "markdown_remove_numbered_nums" }
+]

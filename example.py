@@ -5,7 +5,7 @@ import pprint
 import os.path
 
 pattern_header_num = re.compile(
-    r'(#+)\s+((?:\d\.)+\d)(.*)')  # 判断是否符合 '# 1.2.3.4 之类的'
+    r'(#+)\s+((?:\d\.)*\d)(.*)')  # 判断是否符合 '# 1.2.3.4 之类的'
 pattern_header_num_replace = re.compile(r'(\d\.)+\d')  # 进行替换的reg
 
 pattern_h1_h2_equal_dash = "^.*?(?:(?:\r\n)|\n|\r)(?:-+|=+)$"
@@ -20,15 +20,17 @@ def is_out_of_areas(num, areas):
     return True
 
 
-class ExampleCommand(sublime_plugin.TextCommand):
+# 注册命令
+class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
 
     def run(self, edit):
         sels = self.view.sel()
-        self.log('run')
+        self.log('run insert/update---------------------')
         for sel in sels:
 
             items = self.get_toc(sel.end(), edit)
-            self.update_toc(items, edit)
+            self.update_herader_num(items)
+            self.do_update_header_num(items, edit)
         # self.view.insert(edit, 0, "Hello, World!")
         # for region in reversed(self.view.find_all("<")):
         #     if not region.empty():
@@ -36,6 +38,15 @@ class ExampleCommand(sublime_plugin.TextCommand):
         #         for region in reversed(self.view.find_all(">")):
         #             if not region.empty():
         #                 self.view.replace(edit, region, ">")
+        self.log('end run--------------------')
+
+    def remove(self, edit):
+        sels = self.view.sel()
+        self.log('run remove')
+        for sel in sels:
+            items = self.get_toc(sel.end(), edit)
+            self.do_remove(items, edit)
+        self.log('end run')
 
     def get_toc(self, begin, edit):
 
@@ -49,8 +60,8 @@ class ExampleCommand(sublime_plugin.TextCommand):
         if len(headings) < 1:
             return ''
 
-        self.log('headings:')
-        self.log(headings)
+        # self.log('headings:')
+        # self.log(headings)
 
         items = []  # [[headingNum,text,position,anchor_id],...]
         for heading in headings:
@@ -73,8 +84,7 @@ class ExampleCommand(sublime_plugin.TextCommand):
         self.log(items)
         return items
 
-    def update_toc(self, items, edit):
-        v = self.view
+    def update_herader_num(self, items):
 
         # h1 = 0  # 标题1编号
         # h2 = 0  # 标题2编号
@@ -82,20 +92,20 @@ class ExampleCommand(sublime_plugin.TextCommand):
         # h4 = 0
         # h5 = 0
         # h6 = 0
+        attrs = self.get_settings()
 
-        levels = [1, 0, 0, 0, 0, 0]  # 各个标题等级的开始
+        levels = [attrs['h1'], attrs['h2'], attrs['h3'], attrs[
+            'h4'], attrs['h5'], attrs['h6']]  # 各个标题等级的开始
 
         for item in items:
 
             # item 大概是 [3, '啊啊21', 55]
             level = item[0]
-            title = item[1]
-            start_pos = item[2]
 
             # leverl 从1到6
             levels[level - 1] += 1  # 当前这一级的序号+1
             if level < len(levels):
-                levels[level + 1] = 0  # 下一级的序号重新开始
+                levels[level] = attrs['h'+str(level)]  # 下一级的序号重新开始
 
             # 循环
             new_num = str(levels[0])
@@ -104,50 +114,85 @@ class ExampleCommand(sublime_plugin.TextCommand):
                 if levels[i] > 0:
                     new_num += '.' + str(levels[i])
 
-            print(new_num)
-            print(item)
+            item.append(new_num)  # 保存进入item
+
+            # print(new_num)
+            self.log(item)
+
+            # if level == 1:
+            #   h1 += 1
+            #   h2 = 0
+            # elif level == 2:
+            #   h2 += 1
+            #   h3 = 0
+            # elif level == 3:
+            #   h3 += 1
+            #   h4 = 0
+            # elif level == 4:
+            #   h4 += 1
+            #   h5 = 0
+            # elif level == 5:
+            #   h5 += 1
+            #   h6 = 0
+            # elif level == 6:
+            #   h6 += 1
+
+            # print(anchor_region) 这一行的开始和结束位置，如 (55, 63)
+            # print(v.substr(anchor_region)) 这一行的字符串，如 ### 啊啊
+
+    def do_update_header_num(self, items, edit):
+
+        v = self.view
+
+        for item in reversed(items):
+
+            level = item[0]
+            title = item[1]
+            start_pos = item[2]
+            header_num = item[3]
 
             anchor_region = v.line(start_pos)  # 找到标题的这一行
             line_str = v.substr(anchor_region)
             match = pattern_header_num.match(line_str)
 
-
             if match:
 
-                # 更新
-                print('update')
-                print(match.groups())
+                    # 更新
+                self.log('update')
+                self.log(match.groups())
                 new_line_str = pattern_header_num_replace.sub(
-                    new_num, line_str)
+                    header_num, line_str)
 
                 v.replace(edit, anchor_region, new_line_str)
             else:
 
                 # 插入
-                print('insert')
-                new_line_str = "#" * level + ' ' + new_num + ' ' + title.strip()
+                self.log('insert')
+                new_line_str = "#" * level + ' ' + header_num
+                new_line_str += ' ' + title.strip()
+
                 v.replace(edit, anchor_region, new_line_str)
 
-            # if level == 1:
-            # 	h1 += 1
-            # 	h2 = 0
-            # elif level == 2:
-            # 	h2 += 1
-            # 	h3 = 0
-            # elif level == 3:
-            # 	h3 += 1
-            # 	h4 = 0
-            # elif level == 4:
-            # 	h4 += 1
-            # 	h5 = 0
-            # elif level == 5:
-            # 	h5 += 1
-            # 	h6 = 0
-            # elif level == 6:
-            # 	h6 += 1
+    def do_remove(self, items, edit):
+        v = self.view
+        for item in reversed(items):
+            level = item[0]
+            title = item[1]
+            start_pos = item[2]
 
-            # print(anchor_region) 这一行的开始和结束位置，如 (55, 63)
-            # print(v.substr(anchor_region)) 这一行的字符串，如 ### 啊啊
+            anchor_region = v.line(start_pos)  # 找到标题的这一行
+            line_str = v.substr(anchor_region)
+            match = pattern_header_num.match(line_str)
+
+            if match:
+                print('remove one')
+
+                # print(match.groups());
+                # 匹配到match groups大概是('###', '1.3.2', ' 啊啊sss')
+                # group下标从1开始
+
+                new_line_str = "#" * level + ' ' + match.group(3).strip()
+                v.replace(edit, anchor_region, new_line_str)
 
     def remove_items_in_codeblock(self, items):
 
@@ -166,6 +211,30 @@ class ExampleCommand(sublime_plugin.TextCommand):
         return items
 
     def log(self, arg):
-        arg = str(arg)
-        sublime.status_message(arg)
-        pp.pprint(arg)
+        if self.get_setting('logging'):
+            arg = str(arg)
+            sublime.status_message(arg)
+            pp.pprint(arg)
+
+    def get_setting(self, attr):
+        settings = sublime.load_settings(
+            'MarkdownNumberedHeaders.sublime-settings')
+        return settings.get(attr)
+
+    def get_settings(self):
+        """return dict of settings"""
+        return {
+            "h1":           self.get_setting('h1'),
+            "h2":             self.get_setting('h2'),
+            "h3":              self.get_setting('h3'),
+            "h4":                self.get_setting('h4'),
+            "h5":               self.get_setting('h5'),
+            "h6": self.get_setting('h6'),
+        }
+
+
+# 注册命令
+class MarkdownRemoveNumberedNums(MarkdownAddNumberedNums):
+
+    def run(self, edit):
+        MarkdownAddNumberedNums.remove(self, edit)

@@ -1,13 +1,68 @@
 [
-{
-    "id": "edit",
+  {
+    "id": "tools",
+    "children": [
+      {
+        "caption": "Markdown Numbered Headers",
+        "command": "example",
+        "id": "htmlcodeconverter"
+      }
+
+    ],
+
     "children":
     [
-        {
-		    "id" : "htmlcodeconverter",
-		    "caption" : "HTML尖括号转换",
-		    "command" : "example"
-		}
+      {
+        "caption": "Markdown Numbered Headers",
+        "children":
+        [
+          { 
+            "caption": "Insert / Update", 
+            "command": "markdown_add_numbered_nums"
+          },
+          { 
+          	"caption": "Remove", 
+          	"command": "markdown_remove_numbered_nums"
+          }
+        ]
+      }
     ]
-}
+
+  },
+  {
+    "caption": "Preferences",
+    "children": [
+      {
+        "caption": "Package Settings",
+        "children": [
+          {
+            "caption": "Markdown Numbered Headers",
+            "children": [
+              {
+                "args": {
+                  "file": "${packages}/md_numbered_headers/MarkdownNumberedHeaders.sublime-settings"
+                },
+                "caption": "Settings – Default",
+                "command": "open_file"
+              },
+              {
+                "args": {
+                  "file": "${packages}/User/MarkdownNumberedHeaders.sublime-settings"
+                },
+                "caption": "Settings – User",
+                "command": "open_file"
+              },
+              {
+                "caption": "-"
+              }
+            ]
+          }
+        ],
+        "id": "package-settings",
+        "mnemonic": "P"
+      }
+    ],
+    "id": "preferences",
+    "mnemonic": "n"
+  }
 ]
