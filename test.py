@@ -1,0 +1,27 @@
+# -*- coding:utf-8 -*-
+
+import re
+
+
+pattern_header_num = re.compile(
+    r'(#+)\s+((?:\d\.)+\d)(.*)')  # 判断是否符合 '# 1.2.3.4 之类的'
+pattern_header_num_replace = re.compile(r'(\d\.)+\d')  # 进行替换的reg
+
+
+the_str = '### 1.2.3 asd'
+the_str_insert = '# asd'
+
+match = pattern_header_num.match(the_str)
+print(match.groups())
+
+newstr = pattern_header_num_replace.sub('ggggg', the_str)
+print newstr
+
+
+print("other test:")
+text = 'pythontab'
+m = re.match(r"(.*)", text)
+if m:
+    print(m.groups())
+else:
+    print('not match')
