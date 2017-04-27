@@ -5,14 +5,15 @@ import re
 
 pattern_header_num = re.compile(
     r'(#+)\s+((?:\d\.)+\d)(.*)')  # 判断是否符合 '# 1.2.3.4 之类的'
-pattern_header_num_replace = re.compile(r'(\d\.)+\d')  # 进行替换的reg
+pattern_header_num_replace = re.compile(r'(\d\.)*\d')  # 进行替换的reg
 
 
-the_str = '### 1.2.3 asd'
+the_str = '## 1 reference(参考)'
 the_str_insert = '# asd'
 
 match = pattern_header_num.match(the_str)
-print(match.groups())
+if match:
+    print(match.groups())
 
 newstr = pattern_header_num_replace.sub('ggggg', the_str)
 print newstr

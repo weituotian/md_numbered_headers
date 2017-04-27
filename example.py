@@ -6,7 +6,7 @@ import os.path
 
 pattern_header_num = re.compile(
     r'(#+)\s+((?:\d\.)*\d)(.*)')  # 判断是否符合 '# 1.2.3.4 之类的'
-pattern_header_num_replace = re.compile(r'(\d\.)+\d')  # 进行替换的reg
+pattern_header_num_replace = re.compile(r'(\d\.)*\d')  # 进行替换的reg
 
 pattern_h1_h2_equal_dash = "^.*?(?:(?:\r\n)|\n|\r)(?:-+|=+)$"
 
@@ -19,8 +19,33 @@ def is_out_of_areas(num, areas):
             return False
     return True
 
+# 计算相对深度，比如md中只有三号，四号，五号标题，那么三号标题就是第一，四号就是第二。五号就是第三等等。
+
+
+def format(items):
+    headings = []
+    for item in items:
+        headings.append(item[0])
+    # --------------------------
+
+    # minimize diff between headings -----
+    _depths = list(set(headings))  # sort and unique
+
+    # print(_depths)
+    # replace with depth rank
+    for i, item in enumerate(headings):
+        headings[i] = _depths.index(headings[i]) + 1
+    # ----- /minimize diff between headings
+
+    # print(headings)
+    # --------------------------
+    for i, item in enumerate(items):
+        item.append(headings[i])
+    return items
 
 # 注册命令
+
+
 class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
 
     def run(self, edit):
@@ -81,7 +106,17 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
                         indent = 1 if (
                             self.view.substr(lines[1])[0] == '=') else 2
                         items.append([indent, text, heading.begin()])
+
+        # Shape TOC  ------------------
+        items = format(items)
+
         self.log(items)
+
+        # 深度限制   ------------------
+        _depth = int(self.get_setting('depth'))
+        if 0 < _depth:
+            items = list(filter((lambda i: i[0] <= _depth), items))
+
         return items
 
     def update_herader_num(self, items):
@@ -95,17 +130,17 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
         attrs = self.get_settings()
 
         levels = [attrs['h1'], attrs['h2'], attrs['h3'], attrs[
-            'h4'], attrs['h5'], attrs['h6']]  # 各个标题等级的开始
+            'h4'], attrs['h5'], attrs['h6']]  # 各个标题等级的初始标号
 
         for item in items:
 
-            # item 大概是 [3, '啊啊21', 55]
-            level = item[0]
+            # item 大概是 [3, '啊啊21', 55, 1]
+            level = item[3]
 
-            # leverl 从1到6
+            # level 从1到6
             levels[level - 1] += 1  # 当前这一级的序号+1
             if level < len(levels):
-                levels[level] = attrs['h'+str(level)]  # 下一级的序号重新开始
+                levels[level] = attrs['h' + str(level)]  # 下一级的序号重新开始
 
             # 循环
             new_num = str(levels[0])
@@ -149,7 +184,8 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
             level = item[0]
             title = item[1]
             start_pos = item[2]
-            header_num = item[3]
+            relative_level = item[3]
+            header_num = item[4]
 
             anchor_region = v.line(start_pos)  # 找到标题的这一行
             line_str = v.substr(anchor_region)
@@ -157,12 +193,14 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
 
             if match:
 
-                    # 更新
+                # 更新
                 self.log('update')
-                self.log(match.groups())
+                # self.log(match.groups())
+
                 new_line_str = pattern_header_num_replace.sub(
                     header_num, line_str)
 
+                print(new_line_str)
                 v.replace(edit, anchor_region, new_line_str)
             else:
 
@@ -230,6 +268,7 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
             "h4":                self.get_setting('h4'),
             "h5":               self.get_setting('h5'),
             "h6": self.get_setting('h6'),
+            "depth": self.get_setting('depth')
         }
 
 
