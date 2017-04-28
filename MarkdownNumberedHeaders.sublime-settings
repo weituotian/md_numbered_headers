@@ -6,5 +6,6 @@
   "h5": 0,
   "h6": 0,
   "depth":6,
+  "dottype":"-",
   "logging": true
 }

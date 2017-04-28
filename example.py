@@ -4,9 +4,6 @@ import re
 import pprint
 import os.path
 
-pattern_header_num = re.compile(
-    r'(#+)\s+((?:\d\.)*\d)(.*)')  # 判断是否符合 '# 1.2.3.4 之类的'
-pattern_header_num_replace = re.compile(r'(\d\.)*\d')  # 进行替换的reg
 
 pattern_h1_h2_equal_dash = "^.*?(?:(?:\r\n)|\n|\r)(?:-+|=+)$"
 
@@ -127,7 +124,9 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
         # h4 = 0
         # h5 = 0
         # h6 = 0
+
         attrs = self.get_settings()
+        dot = self.get_setting('dottype')
 
         levels = [attrs['h1'], attrs['h2'], attrs['h3'], attrs[
             'h4'], attrs['h5'], attrs['h6']]  # 各个标题等级的初始标号
@@ -147,7 +146,7 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
 
             for i in range(1, level):
                 if levels[i] > 0:
-                    new_num += '.' + str(levels[i])
+                    new_num += dot + str(levels[i])
 
             item.append(new_num)  # 保存进入item
 
@@ -178,6 +177,12 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
     def do_update_header_num(self, items, edit):
 
         v = self.view
+        dot = self.get_setting('dottype')
+
+        pattern_header_num = re.compile(
+            r'(#+)\s+((?:\d' + dot + ')*\d)(.*)')  # 判断是否符合 '# 1-2-3-4 之类的'
+        pattern_header_num_replace = re.compile(
+            r'(\d' + dot + ')*\d')  # 进行替换的reg
 
         for item in reversed(items):
 
@@ -212,7 +217,16 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
                 v.replace(edit, anchor_region, new_line_str)
 
     def do_remove(self, items, edit):
+
         v = self.view
+
+        dot = self.get_setting('dottype')
+
+        print(dot)
+
+        pattern_header_num = re.compile(
+            r'(#+)\s+((?:\d' + dot + ')*\d)(.*)')  # 判断是否符合 '# 1-2-3-4 之类的'
+
         for item in reversed(items):
             level = item[0]
             title = item[1]
