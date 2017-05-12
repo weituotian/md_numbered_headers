@@ -3,8 +3,8 @@
 import re
 
 
-str_a='a'
-str_a+=1
+str_a = 'a'
+str_a += 1
 print(str_a)
 
 pattern_header_num = re.compile(
@@ -20,7 +20,7 @@ if match:
     print(match.groups())
 
 newstr = pattern_header_num_replace.sub('ggggg', the_str)
-print newstr
+print(newstr)
 
 
 print("other test:")
