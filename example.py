@@ -179,10 +179,13 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
         v = self.view
         dot = self.get_setting('dottype')
 
+        # 如1.2.3.最后一个（.）,如1-2-3-4- 最后一个（-）
+        last_dot = self.get_setting('last_number_dot')
+
         pattern_header_num = re.compile(
-            r'(#+)\s+((?:\d' + dot + ')*\d)(.*)')  # 判断是否符合 '# 1-2-3-4 之类的'
+            r'(#+)\s+((?:\d' + dot + ')*\d)' + last_dot + '(.*)')  # 判断是否符合 '# 1-2-3-4 之类的'
         pattern_header_num_replace = re.compile(
-            r'(\d' + dot + ')*\d')  # 进行替换的reg
+            r'(\d' + dot + ')*\d' + last_dot)  # 进行替换的reg
 
         for item in reversed(items):
 
@@ -203,7 +206,7 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
                 # self.log(match.groups())
 
                 new_line_str = pattern_header_num_replace.sub(
-                    header_num, line_str)
+                    header_num + last_dot, line_str)  # 替换成的内容，搜索的字符串
 
                 print(new_line_str)
                 v.replace(edit, anchor_region, new_line_str)
@@ -212,6 +215,7 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
                 # 插入
                 self.log('insert')
                 new_line_str = "#" * level + ' ' + header_num
+                new_line_str += last_dot
                 new_line_str += ' ' + title.strip()
 
                 v.replace(edit, anchor_region, new_line_str)
@@ -221,11 +225,12 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
         v = self.view
 
         dot = self.get_setting('dottype')
+        last_dot = self.get_setting('last_number_dot')
 
         print(dot)
 
         pattern_header_num = re.compile(
-            r'(#+)\s+((?:\d' + dot + ')*\d)(.*)')  # 判断是否符合 '# 1-2-3-4 之类的'
+            r'(#+)\s+((?:\d' + dot + ')*\d)' + last_dot + '(.*)')  # 判断是否符合 '# 1-2-3-4 之类的'
 
         for item in reversed(items):
             level = item[0]
@@ -271,7 +276,10 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
     def get_setting(self, attr):
         settings = sublime.load_settings(
             'MarkdownNumberedHeaders.sublime-settings')
-        return settings.get(attr)
+        result = settings.get(attr)
+        if result is None:
+            result = ''
+        return result
 
     def get_settings(self):
         """return dict of settings"""

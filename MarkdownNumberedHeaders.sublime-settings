@@ -7,5 +7,6 @@
   "h6": 0,
   "depth":6,
   "dottype":"-",
-  "logging": true
+  "logging": true,
+  "last_number_dot":"."
 }
