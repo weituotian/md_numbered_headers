@@ -4,9 +4,6 @@ import re
 import pprint
 import os.path
 
-
-pattern_h1_h2_equal_dash = "^.*?(?:(?:\r\n)|\n|\r)(?:-+|=+)$"
-
 pp = pprint.PrettyPrinter(indent=4)
 
 
@@ -74,10 +71,10 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
 
         # Search headings in docment
         pattern_hash = "^#+?[^#]"
-        headings = self.view.find_all(
-            "%s|%s" % (pattern_h1_h2_equal_dash, pattern_hash))
 
-        headings = self.remove_items_in_codeblock(headings)
+        headings = self.view.find_all(pattern_hash)
+
+        # headings = self.remove_items_in_codeblock(headings)
 
         if len(headings) < 1:
             return ''
@@ -88,11 +85,12 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
         items = []  # [[headingNum,text,position,anchor_id],...]
         for heading in headings:
             if begin < heading.end():
-                lines = self.view.lines(heading)
+                lines = self.view.lines(heading)  # lines: [(42, 62)]
                 if len(lines) == 1:
                     # handle hash headings, ### chapter 1
                     r = sublime.Region(
                         heading.end() - 1, self.view.line(heading).end())
+                    # self.log(heading)
                     text = self.view.substr(r).strip().rstrip('#')
                     indent = heading.size() - 1
                     items.append([indent, text, heading.begin()])
@@ -174,18 +172,38 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
             # print(anchor_region) 这一行的开始和结束位置，如 (55, 63)
             # print(v.substr(anchor_region)) 这一行的字符串，如 ### 啊啊
 
-    def do_update_header_num(self, items, edit):
+    # 获取分隔符的正则
+    def get_dot_regex(self, dot):
+        if dot == '.':
+            return '\\.'
+        return dot
 
-        v = self.view
+    # 获取匹配一行的正则
+    def get_pattern_header_num(self):
         dot = self.get_setting('dottype')
+        dot_regex = self.get_dot_regex(dot)
 
         # 如1.2.3.最后一个（.）,如1-2-3-4- 最后一个（-）
         last_dot = self.get_setting('last_number_dot')
+        last_dot_regex = self.get_dot_regex(last_dot)
 
         pattern_header_num = re.compile(
-            r'(#+)\s+((?:\d' + dot + ')*\d)' + last_dot + '(.*)')  # 判断是否符合 '# 1-2-3-4 之类的'
+            r'(#+)\s+((?:\d+' + dot_regex + ')*\d+)' + last_dot_regex + '\s+(.*)')  # 判断是否符合 '# 1-2-3-4 之类的'
+        return pattern_header_num
+
+    def do_update_header_num(self, items, edit):
+
+        v = self.view
+
+        dot = self.get_setting('dottype')
+        dot_regex = self.get_dot_regex(dot)
+
+        last_dot = self.get_setting('last_number_dot')
+        last_dot_regex = self.get_dot_regex(last_dot)
+
+        pattern_header_num = self.get_pattern_header_num()
         pattern_header_num_replace = re.compile(
-            r'(\d' + dot + ')*\d' + last_dot)  # 进行替换的reg
+            r'(\d+' + dot_regex + ')*\d+' + last_dot_regex + '\s+')  # 进行替换的reg
 
         for item in reversed(items):
 
@@ -206,7 +224,7 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
                 # self.log(match.groups())
 
                 new_line_str = pattern_header_num_replace.sub(
-                    header_num + last_dot, line_str)  # 替换成的内容，搜索的字符串
+                    header_num + last_dot + ' ', line_str)  # 替换成的内容，搜索的字符串
 
                 print(new_line_str)
                 v.replace(edit, anchor_region, new_line_str)
@@ -229,8 +247,7 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
 
         print(dot)
 
-        pattern_header_num = re.compile(
-            r'(#+)\s+((?:\d' + dot + ')*\d)' + last_dot + '(.*)')  # 判断是否符合 '# 1-2-3-4 之类的'
+        pattern_header_num = self.get_pattern_header_num()
 
         for item in reversed(items):
             level = item[0]
