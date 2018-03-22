@@ -2,7 +2,7 @@ import sublime
 import sublime_plugin
 import re
 import pprint
-import os.path
+# import os.path
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -187,8 +187,11 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
         last_dot = self.get_setting('last_number_dot')
         last_dot_regex = self.get_dot_regex(last_dot)
 
+        # 判断是否符合 '# 1-2-3-4 之类的'
         pattern_header_num = re.compile(
-            r'(#+)\s+((?:\d+' + dot_regex + ')*\d+)' + last_dot_regex + '\s+(.*)')  # 判断是否符合 '# 1-2-3-4 之类的'
+            r'(#+)\s+((?:\d+' + dot_regex + ')*\d+)' +
+            last_dot_regex +
+            '\s+(.*)')
         return pattern_header_num
 
     def do_update_header_num(self, items, edit):
@@ -243,7 +246,6 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
         v = self.view
 
         dot = self.get_setting('dottype')
-        last_dot = self.get_setting('last_number_dot')
 
         print(dot)
 
@@ -251,7 +253,7 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
 
         for item in reversed(items):
             level = item[0]
-            title = item[1]
+            # title = item[1]
             start_pos = item[2]
 
             anchor_region = v.line(start_pos)  # 找到标题的这一行
@@ -301,11 +303,11 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
     def get_settings(self):
         """return dict of settings"""
         return {
-            "h1":           self.get_setting('h1'),
-            "h2":             self.get_setting('h2'),
-            "h3":              self.get_setting('h3'),
-            "h4":                self.get_setting('h4'),
-            "h5":               self.get_setting('h5'),
+            "h1": self.get_setting('h1'),
+            "h2": self.get_setting('h2'),
+            "h3": self.get_setting('h3'),
+            "h4": self.get_setting('h4'),
+            "h5": self.get_setting('h5'),
             "h6": self.get_setting('h6'),
             "depth": self.get_setting('depth')
         }

@@ -35,7 +35,7 @@ print(items2)
 reg = '^.*?(?:(?:\r\n)|\n|\r)(?:-+|=+)$' if 5 < 3 else 'asd'
 print(reg)
 
-dotTest='asd.dsdd.d'
+dotTest = 'asd.dsdd.d'
 pattern_dot = re.compile("d\\.d")
 findall = pattern_dot.findall(dotTest)
 print(findall)
