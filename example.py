@@ -43,13 +43,18 @@ def format(items):
 class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
 
     def run(self, edit):
-        sels = self.view.sel()
         self.log('run insert/update---------------------')
-        for sel in sels:
-
-            items = self.get_toc(sel.end(), edit)
+        if self.get_setting('format_all'):
+            items = self.get_toc(0, edit)
             self.update_herader_num(items)
             self.do_update_header_num(items, edit)
+        else:
+            sels = self.view.sel()
+            for sel in sels:
+                items = self.get_toc(sel.end(), edit)
+                self.update_herader_num(items)
+                self.do_update_header_num(items, edit)
+
         # self.view.insert(edit, 0, "Hello, World!")
         # for region in reversed(self.view.find_all("<")):
         #     if not region.empty():
@@ -60,17 +65,21 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
         self.log('end run--------------------')
 
     def remove(self, edit):
-        sels = self.view.sel()
         self.log('run remove')
-        for sel in sels:
-            items = self.get_toc(sel.end(), edit)
+        if self.get_setting('format_all'):
+            items = self.get_toc(0, edit)
             self.do_remove(items, edit)
+        else:
+            sels = self.view.sel()
+            for sel in sels:
+                items = self.get_toc(sel.end(), edit)
+                self.do_remove(items, edit)
         self.log('end run')
 
     def get_toc(self, begin, edit):
 
         # Search headings in docment
-        pattern_hash = "^#+?[^#]"
+        pattern_hash = "^#+?[^!#]"
 
         headings = self.view.find_all(pattern_hash)
 

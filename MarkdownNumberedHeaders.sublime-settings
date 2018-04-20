@@ -8,5 +8,6 @@
   "depth":6,
   "dottype":"-",
   "logging": true,
-  "last_number_dot":"."
+  "last_number_dot":".",
+  "format_all":false
 }
