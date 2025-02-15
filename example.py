@@ -43,18 +43,13 @@ def format(items):
 class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
 
     def run(self, edit):
+        sels = self.view.sel()
         self.log('run insert/update---------------------')
-        if self.get_setting('format_all'):
-            items = self.get_toc(0, edit)
+        for sel in sels:
+
+            items = self.get_toc(sel.end(), edit)
             self.update_herader_num(items)
             self.do_update_header_num(items, edit)
-        else:
-            sels = self.view.sel()
-            for sel in sels:
-                items = self.get_toc(sel.end(), edit)
-                self.update_herader_num(items)
-                self.do_update_header_num(items, edit)
-
         # self.view.insert(edit, 0, "Hello, World!")
         # for region in reversed(self.view.find_all("<")):
         #     if not region.empty():
@@ -65,41 +60,30 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
         self.log('end run--------------------')
 
     def remove(self, edit):
+        sels = self.view.sel()
         self.log('run remove')
-        if self.get_setting('format_all'):
-            items = self.get_toc(0, edit)
+        for sel in sels:
+            items = self.get_toc(sel.end(), edit)
             self.do_remove(items, edit)
-        else:
-            sels = self.view.sel()
-            for sel in sels:
-                items = self.get_toc(sel.end(), edit)
-                self.do_remove(items, edit)
         self.log('end run')
 
     def get_toc(self, begin, edit):
-
-        # Search headings in docment
+        # Search headings in document
         pattern_hash = "^#+?[^!#]"
-
         headings = self.view.find_all(pattern_hash)
-
-        # headings = self.remove_items_in_codeblock(headings)
 
         if len(headings) < 1:
             return ''
 
-        # self.log('headings:')
-        # self.log(headings)
-
         items = []  # [[headingNum,text,position,anchor_id],...]
+        code_blocks = self.get_code_blocks()  # Get code block positions
+
         for heading in headings:
-            if begin < heading.end():
+            if begin < heading.end() and self.is_out_of_code_blocks(heading, code_blocks):
                 lines = self.view.lines(heading)  # lines: [(42, 62)]
                 if len(lines) == 1:
                     # handle hash headings, ### chapter 1
-                    r = sublime.Region(
-                        heading.end() - 1, self.view.line(heading).end())
-                    # self.log(heading)
+                    r = sublime.Region(heading.end() - 1, self.view.line(heading).end())
                     text = self.view.substr(r).strip().rstrip('#')
                     indent = heading.size() - 1
                     items.append([indent, text, heading.begin()])
@@ -107,21 +91,32 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
                     # handle - or + headings, Title 1==== section1----
                     text = self.view.substr(lines[0])
                     if text.strip():
-                        indent = 1 if (
-                            self.view.substr(lines[1])[0] == '=') else 2
+                        indent = 1 if (self.view.substr(lines[1])[0] == '=') else 2
                         items.append([indent, text, heading.begin()])
 
         # Shape TOC  ------------------
         items = format(items)
 
-        self.log(items)
-
-        # 深度限制   ------------------
+        # Depth limit ------------------
         _depth = int(self.get_setting('depth'))
         if 0 < _depth:
             items = list(filter((lambda i: i[0] <= _depth), items))
 
         return items
+
+    def get_code_blocks(self):
+        """Find code blocks defined by triple backticks."""
+        code_block_pattern = r"```(?:\s*(\w+)?\s*)?([\s\S]*?)```"
+        code_blocks = self.view.find_all(code_block_pattern, sublime.IGNORECASE)
+
+        return [(block.begin(), block.end()) for block in code_blocks]
+
+    def is_out_of_code_blocks(self, heading, code_blocks):
+        """Check if a given heading is outside the identified code blocks."""
+        for start, end in code_blocks:
+            if start < heading.end() and heading.begin() < end:
+                return False
+        return True
 
     def update_herader_num(self, items):
 
