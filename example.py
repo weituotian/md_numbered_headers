@@ -105,11 +105,18 @@ class MarkdownAddNumberedNums(sublime_plugin.TextCommand):
         return items
 
     def get_code_blocks(self):
-        """Find code blocks defined by triple backticks."""
+        """Find code blocks defined by triple and quadruple backticks."""
+        # Triple backticks
         code_block_pattern = r"```(?:\s*(\w+)?\s*)?([\s\S]*?)```"
         code_blocks = self.view.find_all(code_block_pattern, sublime.IGNORECASE)
 
-        return [(block.begin(), block.end()) for block in code_blocks]
+        # Quadruple backticks
+        quad_code_block_pattern = r"````(?:\s*(\w+)?\s*)?([\s\S]*?)````"
+        quad_code_blocks = self.view.find_all(quad_code_block_pattern, sublime.IGNORECASE)
+
+        # Combine results and return
+        all_code_blocks = code_blocks + quad_code_blocks
+        return [(block.begin(), block.end()) for block in all_code_blocks]
 
     def is_out_of_code_blocks(self, heading, code_blocks):
         """Check if a given heading is outside the identified code blocks."""
