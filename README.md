@@ -72,4 +72,5 @@ Example: MarkdownNumberedHeaders.sublime-settings
 
 <a id="4-changelog"></a>
 ## 4. changelog
+- v1.2.0 thanks to [Kristinita](https://github.com/Kristinita), now we can ignores the code blocks between the triple and quadruple backticks
 - v1.0.3 the plugin in the Package Controll, may be older then the lastest
